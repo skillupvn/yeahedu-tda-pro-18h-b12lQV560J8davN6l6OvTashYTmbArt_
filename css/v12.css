@@ -1,0 +1,240 @@
+/* ================================================================
+   YeahEdu-TDA v12 "PhoenixEdu Pro" - Layer nang cap v12
+   Dropdown menu, gamification, profile, guide
+   ================================================================ */
+
+/* ============ NAV DROPDOWN ============ */
+.nav-dropdown {
+  position: relative;
+}
+.nav-dropdown > .nav-tab {
+  padding-right: 30px !important;
+  position: relative;
+}
+.nav-dropdown > .nav-tab::after {
+  content: '\25BE';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: .8rem;
+  opacity: .6;
+  transition: transform .2s;
+}
+.nav-dropdown.open > .nav-tab::after {
+  transform: translateY(-50%) rotate(180deg);
+}
+/* v12.4 FIX: dropdown menu must escape parent stacking context and outrank sticky header */
+.nav-dropdown {
+  position: relative;
+  z-index: 400;
+}
+.nav-dropdown.open {
+  z-index: 500; /* Open one sits above other closed dropdowns */
+}
+.nav-dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 240px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, .35);
+  padding: 6px;
+  z-index: 501;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-8px);
+  transition: all .22s cubic-bezier(.4, 0, .2, 1);
+  max-height: 70vh;
+  overflow-y: auto;
+  pointer-events: none; /* Prevent clicks while hidden */
+}
+.nav-dropdown.open .nav-dropdown-menu {
+  pointer-events: auto;
+}
+.nav-dropdown.open .nav-dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+.nav-dropdown-item {
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text2);
+  font-size: .9rem;
+  font-weight: 600;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.nav-dropdown-item:hover {
+  background: var(--bg3);
+  color: var(--c1);
+}
+.nav-dropdown-item.active {
+  background: linear-gradient(135deg, rgba(0, 200, 150, .15), rgba(0, 124, 240, .1));
+  color: var(--c1);
+}
+.nav-dropdown-item .item-desc {
+  color: var(--text2);
+  font-size: .72rem;
+  font-weight: 400;
+  margin-top: 2px;
+}
+.nav-dropdown-item .item-icon {
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+.nav-dropdown-item .item-badge {
+  margin-left: auto;
+  font-size: .65rem;
+  padding: 2px 6px;
+  background: linear-gradient(135deg, #f59e0b, #dc2626);
+  color: #fff;
+  border-radius: 6px;
+  font-weight: 800;
+}
+.nav-dropdown-divider {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 6px;
+}
+
+/* Backdrop DEPRECATED in v12.4 - kept for legacy cleanup (removed if any exist) */
+.nav-dropdown-backdrop {
+  display: none !important;
+}
+
+/* ============ ENHANCED HEADER ============ */
+.header-actions {
+  gap: 10px !important;
+}
+.user-mini {
+  transition: all .2s !important;
+}
+.user-mini:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .15);
+}
+
+/* ============ NEW: ENHANCED NAV BAR ============ */
+.nav-tabs {
+  gap: 4px !important;
+  padding: 0 20px !important;
+  overflow: visible !important;
+}
+.nav-tab {
+  border-radius: 8px 8px 0 0 !important;
+  padding: 14px 18px !important;
+  gap: 8px !important;
+}
+
+/* ============ ANIMATIONS ============ */
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============ KBD ============ */
+kbd {
+  background: var(--bg3);
+  border: 1px solid var(--border2);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-family: 'SF Mono', Monaco, monospace;
+  font-size: .82em;
+  box-shadow: 0 2px 0 var(--border);
+  color: var(--text);
+  margin: 0 2px;
+}
+
+/* ============ TOPIC GRID (updated) ============ */
+.topic-grid-wrap {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 14px;
+  margin: 12px 0;
+}
+.topic-item {
+  transition: all .25s cubic-bezier(.4, 0, .2, 1) !important;
+}
+
+/* ============ MOBILE RESPONSIVE ============ */
+@media (max-width: 768px) {
+  .nav-dropdown-menu {
+    min-width: 200px;
+    max-width: 90vw;
+  }
+  .user-mini {
+    padding: 4px 8px 4px 4px !important;
+    gap: 6px !important;
+  }
+  .user-mini > div:nth-child(2) {
+    display: none;
+  }
+  .nav-tab {
+    padding: 12px 14px !important;
+    font-size: .82rem !important;
+  }
+}
+
+/* ============ EMPTY STATES ============ */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text2);
+}
+.empty-state .emoji {
+  font-size: 4rem;
+  margin-bottom: 16px;
+  opacity: .5;
+}
+
+/* ============ DETAILS TAG STYLING ============ */
+details {
+  padding: 8px 0;
+}
+details summary {
+  list-style: none;
+  cursor: pointer;
+  color: var(--text);
+  font-weight: 600;
+  padding: 6px 0;
+  transition: color .15s;
+}
+details summary::before {
+  content: '\25B8';
+  display: inline-block;
+  margin-right: 6px;
+  transition: transform .2s;
+  color: var(--c1);
+}
+details[open] summary::before {
+  transform: rotate(90deg);
+}
+details summary:hover {
+  color: var(--c1);
+}
+
+/* Links in guide */
+.card a, details a {
+  color: var(--c1);
+  text-decoration: none;
+  border-bottom: 1px dashed var(--c1);
+}
+.card a:hover {
+  color: var(--c2);
+}
+
+/* ============ NEW HERO CARD ============ */
+.hero-stat {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+}
