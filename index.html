@@ -75,28 +75,6 @@
 </style>
 </head>
 <body data-theme="dark">
-<!-- ===== LỚP KHÓA - BẮT ĐẦU ===== -->
-<div id="licenseGate" style="position:fixed;inset:0;z-index:999999;
-     background:#0f1220;display:flex;justify-content:center;align-items:center;
-     font-family:Arial,sans-serif;">
-  <div style="background:#fff;padding:34px;border-radius:14px;width:360px;
-       max-width:90%;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,.4)">
-    <h2 style="margin:0 0 6px;color:#1f2a44">🔒 Kích hoạt bản quyền</h2>
-    <p style="color:#667;margin:0 0 16px;font-size:14px">
-      Vui lòng nhập License Key để sử dụng ứng dụng.</p>
-    <input id="licKeyInput" type="text" placeholder="VD: DEMO-1234-5678"
-      style="width:100%;padding:12px;border:1px solid #ccd;border-radius:9px;
-      box-sizing:border-box;font-size:15px;text-align:center;letter-spacing:1px">
-    <button id="licBtn" onclick="activateLicense()"
-      style="width:100%;padding:12px;margin-top:12px;background:#4f7cff;color:#fff;
-      border:none;border-radius:9px;font-size:16px;cursor:pointer">
-      Kích hoạt</button>
-    <div id="licMsg" style="margin-top:12px;font-size:14px;min-height:18px"></div>
-    <p style="color:#99a;margin:14px 0 0;font-size:12px">
-      Chưa có key? Liên hệ nhà cung cấp để được cấp phép.</p>
-  </div>
-</div>
-<!-- ===== LỚP KHÓA - KẾT THÚC ===== -->
 <div class="app-wrap">
 
 <!-- HEADER — GIỮ NGUYÊN GỐC -->
@@ -796,96 +774,6 @@
 
 <!-- Boot LAST -->
 <script src="js/99-boot.js?v=12.5"></script>
-
-<!-- ===== SCRIPT GAS ===== -->
-<script>
-(function () {
-  // === DÁN LINK API APPS SCRIPT CỦA BẠN ===
-  const LICENSE_API = "https://script.google.com/macros/s/AKfycbwr9UQ7rHSt-MLuiYj0FTojZCrHKucCdDaP4QVydbkyGox7fJHhADfQd4vnHzEnXllv/exec";DÁN_LINK_APPS_SCRIPT_CỦA_BẠN_VÀO_ĐÂY
-
-  // Thời gian nhớ kích hoạt (tính bằng giờ). VD 12 = 12 tiếng mới hỏi lại 1 lần
-  const REMEMBER_HOURS = 12;
-
-  const STORAGE_KEY = "app_lic_v1";
-  const gate = document.getElementById("licenseGate");
-
-  // Ẩn nội dung app cho tới khi verify xong
-  document.documentElement.style.overflow = "hidden";
-
-  // Kiểm tra "vé thông hành" đã lưu còn hạn không
-  function checkStored() {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return false;
-      const obj = JSON.parse(raw);
-      const now = Date.now();
-      // Hết hạn theo license HOẶC hết thời gian nhớ tạm
-      if (now > obj.expiry_ts) return false;
-      if (now > obj.recheck_at) return false;
-      return true;
-    } catch (e) { return false; }
-  }
-
-  function unlock() {
-    gate.style.display = "none";
-    document.documentElement.style.overflow = "";
-  }
-
-  // Nếu đã kích hoạt trước đó và còn hạn -> mở luôn
-  if (checkStored()) { unlock(); }
-
-  // Hàm gọi khi bấm nút Kích hoạt
-  window.activateLicense = async function () {
-    const input = document.getElementById("licKeyInput");
-    const msg   = document.getElementById("licMsg");
-    const btn   = document.getElementById("licBtn");
-    const key   = (input.value || "").trim();
-
-    if (!key) { msg.textContent = "Vui lòng nhập key"; msg.style.color = "#d33"; return; }
-
-    btn.disabled = true; btn.textContent = "Đang kiểm tra...";
-    msg.style.color = "#667"; msg.textContent = "Đang xác thực...";
-
-    const domain = location.hostname; // tự lấy tên miền hiện tại
-
-    try {
-      const url = LICENSE_API + "?key=" + encodeURIComponent(key)
-                              + "&domain=" + encodeURIComponent(domain);
-      const res  = await fetch(url);
-      const data = await res.json();
-
-      if (data.success) {
-        // Lưu "vé thông hành" tạm
-        const record = {
-          key: key,
-          expiry_ts: data.expiry_ts,
-          token: data.token,
-          recheck_at: Date.now() + REMEMBER_HOURS * 3600 * 1000
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(record));
-        msg.style.color = "#1a9e4b";
-        msg.textContent = "✅ Thành công! Gói " + data.plan +
-                          " · còn " + data.days_left + " ngày";
-        setTimeout(unlock, 700);
-      } else {
-        msg.style.color = "#d33";
-        msg.textContent = "❌ " + data.message;
-        btn.disabled = false; btn.textContent = "Kích hoạt";
-      }
-    } catch (e) {
-      msg.style.color = "#d33";
-      msg.textContent = "Lỗi kết nối, thử lại.";
-      btn.disabled = false; btn.textContent = "Kích hoạt";
-    }
-  };
-
-  // Cho phép nhấn Enter để kích hoạt
-  document.getElementById("licKeyInput")
-    .addEventListener("keydown", function (e) {
-      if (e.key === "Enter") window.activateLicense();
-    });
-})();
-</script>
 
 </body>
 </html>
