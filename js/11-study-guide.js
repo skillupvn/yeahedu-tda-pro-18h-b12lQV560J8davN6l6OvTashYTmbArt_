@@ -188,10 +188,79 @@ window.sgDelete=function(id){ if(!confirm(C.confirmDelete)) return; _tx('readwri
 window.sgExport=function(fmt){
   var d=window.__sgLastData;
   if(!d){ if(window.toast) toast(C.error,'Ch\u01b0a c\u00f3 \u0111\u1ec1 c\u01b0\u01a1ng','error'); return; }
-  if(fmt==='md'){ _download(_toMd(d),(d.title||'de-cuong')+'.md','text/markdown'); }
-  else if(fmt==='html'){ _download(_toHtml(d),(d.title||'de-cuong')+'.html','text/html'); }
-  else if(fmt==='pdf'){ var w=window.open('','_blank'); w.document.write(_toHtml(d,true)); w.document.close(); setTimeout(function(){w.print();},500); }
+  var safeName=(d.title||'de-cuong').replace(/[^\w\u00c0-\u1EF9\s-]/g,'').replace(/\s+/g,'-').slice(0,60);
+  if(fmt==='md'){ _download(_toMd(d),safeName+'.md','text/markdown'); return; }
+  // v12.5: Dùng template shared đẹp
+  var html = window.yeExportDoc ? window.yeExportDoc({
+    title: d.title || 'Đề cương ôn tập',
+    subtitle: 'Đề cương do AI tạo tự động từ tài liệu',
+    badge: 'ĐỀ CƯƠNG ÔN TẬP',
+    body: _toBodyPro(d),
+    toc: _toTocPro(d),
+    showPrint: fmt !== 'pdf'
+  }) : _toHtml(d, fmt==='pdf');
+  if(fmt==='html'){ window.yeDownloadDoc ? window.yeDownloadDoc(html, safeName+'.html') : _download(html, safeName+'.html','text/html'); }
+  else if(fmt==='pdf'){ window.yePrintDoc ? window.yePrintDoc(html) : (function(){var w=window.open('','_blank');w.document.write(html);w.document.close();setTimeout(function(){w.print();},500);})(); }
 };
+
+function _toTocPro(d){
+  if(!d.sections||!d.sections.length) return '';
+  var h='<div class="doc-toc"><h3>📑 Mục lục</h3><ol>';
+  d.sections.forEach(function(s,i){
+    h+='<li><a href="#sg-sec-'+i+'"><span>'+_esc(s.heading)+'</span><span>trang ' + (i+2) + '</span></a></li>';
+  });
+  h+='</ol></div>';
+  return h;
+}
+
+function _toBodyPro(d){
+  var body = '';
+  if(d.objectives && d.objectives.length){
+    body += '<h2>🎯 ' + L.objectives.replace(':','') + '</h2><ul>';
+    d.objectives.forEach(function(o){ body += '<li>' + _esc(o) + '</li>'; });
+    body += '</ul>';
+  }
+  (d.sections||[]).forEach(function(s,i){
+    body += '<h2 id="sg-sec-'+i+'">' + (i+1) + '. ' + _esc(s.heading) + '</h2>';
+    if(s.summary) body += '<p><em>' + _esc(s.summary) + '</em></p>';
+    if(s.points && s.points.length){
+      body += '<ul>';
+      s.points.forEach(function(p){ body += '<li>' + _esc(p) + '</li>'; });
+      body += '</ul>';
+    }
+    if(s.keyIdea){
+      body += '<div class="doc-key"><b>' + L.keyIdea + '</b> ' + _esc(s.keyIdea) + '</div>';
+    }
+    if(s.keyTerms && s.keyTerms.length){
+      body += '<h3>🔑 ' + L.keyTerms + '</h3><table class="doc-table"><thead><tr><th style="width:30%">Từ khóa</th><th>Định nghĩa</th></tr></thead><tbody>';
+      s.keyTerms.forEach(function(k){
+        body += '<tr><td><b>' + _esc(k.term) + '</b></td><td>' + _esc(k.def) + '</td></tr>';
+      });
+      body += '</tbody></table>';
+    }
+    if(s.examples && s.examples.length){
+      body += '<h3>📝 ' + L.examples + '</h3><ul>';
+      s.examples.forEach(function(ex){ body += '<li>' + _esc(ex) + '</li>'; });
+      body += '</ul>';
+    }
+  });
+  if(d.keyPoints && d.keyPoints.length){
+    body += '<h2>⭐ ' + L.keyPoints + '</h2><div class="doc-callout doc-callout-warn"><ul style="margin:0">';
+    d.keyPoints.forEach(function(p){ body += '<li>' + _esc(p) + '</li>'; });
+    body += '</ul></div>';
+  }
+  if(d.practiceQuestions && d.practiceQuestions.length){
+    body += '<h2>❓ ' + L.practice + '</h2><ol>';
+    d.practiceQuestions.forEach(function(q){ body += '<li>' + _esc(q) + '</li>'; });
+    body += '</ol>';
+  }
+  if(d.furtherReading && d.furtherReading.length){
+    body += '<h2>📚 ' + L.furtherRead + '</h2><div class="doc-callout doc-callout-info"><ul style="margin:0">';
+    d.furtherReading.forEach(function(f){ body += '<li>' + _esc(f) + '</li>'; });
+    body += '</ul></div>';
+  }
+  return body;
+}
 
 function _toMd(d){
   var md='# '+(d.title||'\u0110\u1ec1 c\u01b0\u01a1ng')+'\n\n';

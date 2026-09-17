@@ -156,18 +156,49 @@ window.faqDelete=function(id){if(!confirm(C.confirmDelete)) return; _tx('readwri
 window.faqExport=function(fmt){
   var d=window.__faqLastData;
   if(!d){ if(window.toast) toast(C.error,'Ch\u01b0a c\u00f3 FAQ','error'); return; }
+  var safeName=(d.title||'faq').replace(/[^\w\u00c0-\u1EF9\s-]/g,'').replace(/\s+/g,'-').slice(0,60);
   if(fmt==='md'){
     var md='# '+(d.title||'FAQ')+'\n\n';
     d.items.forEach(function(it,i){md+='## '+(i+1)+'. '+it.q+'\n\n'+it.a+'\n\n---\n\n';});
-    _download(md,'faq.md','text/markdown');
-  } else {
-    var body='<h1>'+_esc(d.title||'FAQ')+'</h1>';
-    d.items.forEach(function(it,i){body+='<details style="margin-bottom:12px;border:1px solid #e2e8f0;border-radius:8px;padding:12px"><summary style="font-weight:700;cursor:pointer;font-size:1.05rem">'+(i+1)+'. '+_esc(it.q)+'</summary><div style="margin-top:10px;padding-top:10px;border-top:1px dashed #ccc">'+_esc(it.a)+'</div></details>';});
-    var css='body{font-family:Georgia,"Times New Roman","Noto Serif",serif;max-width:900px;margin:40px auto;padding:20px;color:#1a1a2e;line-height:1.6}h1{color:#00c896}summary:hover{color:#00c896}';
-    var html='<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><title>'+_esc(d.title||'FAQ')+'</title><style>'+css+'</style></head><body>'+body+'</body></html>';
-    if(fmt==='html') _download(html,'faq.html','text/html');
-    else{ var w=window.open('','_blank');w.document.write(html);w.document.close();setTimeout(function(){w.print();},500); }
+    _download(md,safeName+'.md','text/markdown');
+    return;
   }
+  // v12.5 template shared đẹp
+  var lvlLabels = {basic:'Cơ bản',medium:'Trung bình',advanced:'Nâng cao'};
+  var body = '';
+  // Group by level
+  var byLevel = {basic:[],medium:[],advanced:[],other:[]};
+  d.items.forEach(function(it){
+    if(byLevel[it.level]) byLevel[it.level].push(it);
+    else byLevel.other.push(it);
+  });
+  ['basic','medium','advanced','other'].forEach(function(lvl){
+    var items = byLevel[lvl];
+    if(!items.length) return;
+    if(lvl !== 'other') body += '<h2>' + (lvl==='basic'?'🌱 ':lvl==='medium'?'📘 ':'🎓 ') + lvlLabels[lvl] + ' (' + items.length + ' câu)</h2>';
+    else body += '<h2>❓ Khác</h2>';
+    items.forEach(function(it, i){
+      body += '<div class="faq-q">'
+        + '<h3>' + (i+1) + '. ' + _esc(it.q) + '</h3>'
+        + '<p>' + _esc(it.a) + '</p>';
+      if(it.topic || (it.tags && it.tags.length)){
+        body += '<div style="margin-top:8px;font-size:.82rem;color:#666">';
+        if(it.topic) body += '<b>Chủ đề:</b> ' + _esc(it.topic) + ' &nbsp;·&nbsp; ';
+        if(it.tags && it.tags.length) body += '<b>Tags:</b> ' + it.tags.map(_esc).join(', ');
+        body += '</div>';
+      }
+      body += '</div>';
+    });
+  });
+  var html = window.yeExportDoc ? window.yeExportDoc({
+    title: d.title || 'FAQ - Câu hỏi thường gặp',
+    subtitle: d.items.length + ' câu hỏi được AI sinh tự động',
+    badge: 'CÂU HỎI THƯỜNG GẶP',
+    body: body,
+    showPrint: fmt !== 'pdf'
+  }) : ('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>FAQ</title></head><body>' + body + '</body></html>');
+  if(fmt==='html'){ window.yeDownloadDoc ? window.yeDownloadDoc(html, safeName+'.html') : _download(html, safeName+'.html','text/html'); }
+  else if(fmt==='pdf'){ window.yePrintDoc ? window.yePrintDoc(html) : (function(){var w=window.open('','_blank');w.document.write(html);w.document.close();setTimeout(function(){w.print();},500);})(); }
 };
 
 function _download(c,n,t){var b=new Blob([c],{type:t});var u=URL.createObjectURL(b);var a=document.createElement('a');a.href=u;a.download=n;a.click();URL.revokeObjectURL(u);}

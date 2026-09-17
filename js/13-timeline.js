@@ -159,25 +159,38 @@ window.tlDelete=function(id){if(!confirm(C.confirmDelete)) return; _tx('readwrit
 window.tlExport=function(fmt){
   var d=window.__tlLastData;
   if(!d){ if(window.toast) toast(C.error,'Ch\u01b0a c\u00f3 timeline','error'); return; }
+  var safeName=(d.title||'timeline').replace(/[^\w\u00c0-\u1EF9\s-]/g,'').replace(/\s+/g,'-').slice(0,60);
   if(fmt==='md'){
     var md='# '+(d.title||'Timeline')+'\n\n';
     d.events.forEach(function(ev){md+='## '+ev.date+' - '+ev.title+'\n'+(ev.desc||'')+'\n\n';});
-    _download(md,'timeline.md','text/markdown');
-  } else {
-    var body='<h1>'+_esc(d.title||'Timeline')+'</h1><div style="position:relative;padding-left:30px;border-left:3px solid #00c896">';
-    d.events.forEach(function(ev){
-      body+='<div style="margin-bottom:20px;position:relative"><div style="position:absolute;left:-38px;width:14px;height:14px;border-radius:50%;background:#00c896;border:3px solid #fff;box-shadow:0 0 0 2px #00c896"></div>'
-        +'<div style="background:linear-gradient(135deg,#00c896,#007cf0);color:#fff;padding:3px 10px;border-radius:12px;display:inline-block;font-size:.85rem;font-weight:700;margin-bottom:6px">'+_esc(ev.date)+'</div>'
-        +'<div style="font-size:1.1rem;font-weight:700;margin-bottom:4px">'+_esc(ev.title)+'</div>'
-        +(ev.desc?'<div style="color:#555">'+_esc(ev.desc)+'</div>':'')
-        +'</div>';
-    });
-    body+='</div>';
-    var css='body{font-family:Georgia,serif;max-width:800px;margin:40px auto;padding:20px;color:#1a1a2e;line-height:1.7}h1{color:#00c896;border-bottom:3px solid #00c896;padding-bottom:8px;margin-bottom:24px}';
-    var html='<!DOCTYPE html><html lang="vi"><head><meta charset="UTF-8"><title>'+_esc(d.title||'Timeline')+'</title><style>'+css+'</style></head><body>'+body+'</body></html>';
-    if(fmt==='html') _download(html,'timeline.html','text/html');
-    else{var w=window.open('','_blank');w.document.write(html);w.document.close();setTimeout(function(){w.print();},500);}
+    _download(md,safeName+'.md','text/markdown');
+    return;
   }
+  // v12.5 template shared đẹp
+  var body='<div class="tl-wrap">';
+  d.events.forEach(function(ev){
+    body+='<div class="tl-event">'
+      +'<div class="tl-date">'+_esc(ev.date||'?')+'</div>'
+      +'<div class="tl-title">'+_esc(ev.title)+'</div>'
+      +(ev.desc?'<div class="tl-desc">'+_esc(ev.desc)+'</div>':'');
+    if(ev.location||(ev.figures&&ev.figures.length)){
+      body+='<div style="margin-top:8px;font-size:.82rem;color:#666">';
+      if(ev.location) body+='📍 <b>'+_esc(ev.location)+'</b>';
+      if(ev.figures&&ev.figures.length){ if(ev.location) body+=' &nbsp;·&nbsp; '; body+='👥 '+ev.figures.map(_esc).join(', '); }
+      body+='</div>';
+    }
+    body+='</div>';
+  });
+  body+='</div>';
+  var html = window.yeExportDoc ? window.yeExportDoc({
+    title: d.title || 'Timeline',
+    subtitle: d.events.length + ' sự kiện được sắp xếp theo thời gian',
+    badge: 'DÒNG THỜI GIAN',
+    body: body,
+    showPrint: fmt !== 'pdf'
+  }) : ('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Timeline</title></head><body>'+body+'</body></html>');
+  if(fmt==='html'){ window.yeDownloadDoc ? window.yeDownloadDoc(html, safeName+'.html') : _download(html, safeName+'.html','text/html'); }
+  else if(fmt==='pdf'){ window.yePrintDoc ? window.yePrintDoc(html) : (function(){var w=window.open('','_blank');w.document.write(html);w.document.close();setTimeout(function(){w.print();},500);})(); }
 };
 
 function _download(c,n,t){var b=new Blob([c],{type:t});var u=URL.createObjectURL(b);var a=document.createElement('a');a.href=u;a.download=n;a.click();URL.revokeObjectURL(u);}
